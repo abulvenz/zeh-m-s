@@ -1,0 +1,19 @@
+{
+    "name": "vertx",
+    "version": "1.0.0",
+    "description": "= Starter",
+    "main": "index.js",
+    "scripts": {
+        "start": "parcel frontend/index.html --out-dir webroot/ --public-url http://localhost:8888/static/",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "parcel-bundler": "^1.12.4"
+    },
+    "dependencies": {
+        "mithril": "^2.0.4"
+    }
+}
