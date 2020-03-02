@@ -1,5 +1,26 @@
 import m from 'mithril';
 
+import login from './login';
+import { img, footer, div, article, button } from './tags';
+
+import images from "*.png"
+import auth from './auth';
+
+let text = 'HJH';
+
 m.mount(document.body, {
-    view: vnode => 'Hello, you fool 2'
+    view: vnode => [
+
+        div.container(
+            article.h100vh(
+                m(login),
+                button({ onclick: e => auth.request({ url: '/protected/secret' }).then(r => text = r.text) }, 'Get the secret'),
+                text
+            ),
+
+        ),
+        footer.sticky(
+            img.logo({ src: images.logo }),
+        )
+    ]
 })
