@@ -1,20 +1,55 @@
 import m from "mithril";
 import S from "./settings";
 
-import jwt_decode from "jwt-decode";
-
+import eb from "vertx3-eventbus-client";
 
 let user = undefined;
 
 const auth = (() => {
     let email = "";
     let password = "";
-    let token = null;
-    let expMillis = -1;
     let eventBus = null;
     let userid = null;
+    let loggedIn = false;
+
+    m.request({
+        url: S.url('/auth/loggedin'),
+        withCredentials: true
+    }).then(r => {
+        loggedIn = r.loggedin;
+        if (loggedIn) {
+            connectEventBus();
+        }
+    })
+
     let userMessageSubscriptions = [];
     let connected = false;
+    const connectEventBus = () => {
+        eventBus = new eb(S.url("/protected/eventbus"), {
+            token: "token"
+        });
+        eventBus.onopen = () => {
+            connected = true;
+            eventBus.registerHandler(
+                userid, {
+                    token: token
+                },
+                (err, msg) => {
+                    notifications.push(msg);
+                    //                    groups.invalidate();
+                    userMessageSubscriptions.forEach(f => f(msg));
+                    m.redraw();
+                }
+            );
+            m.redraw();
+        };
+        eventBus.onclose = () => {
+            eventBus = null;
+            connected = false;
+            m.redraw();
+        };
+    };
+
     const refresh = (cb, err_cb) => {
         if (email === "" || password === "") return;
         m.request({
@@ -25,27 +60,24 @@ const auth = (() => {
             url: S.url("/auth/login"),
             method: "post"
         }).then(response => {
-            token = response.token;
-            let ttt = jwt_decode(token);
-            expMillis = ttt.exp * 1000;
-            userid = ttt.crypto;
+            loggedIn = true;
             if (cb) cb();
-            setTimeout(refresh, -Date.now() + expMillis - 100);
+            connectEventBus();
         }, err => {
+            loggedIn = false;
             connected = false;
-            token = null;
             err_cb && err_cb(err);
         });
     };
 
     return {
-        sessionRunningMillis: () => expMillis,
         login: refresh,
         logout: () => {
+            loggedIn = false;
             eventBus && eventBus.close();
             m.request({
                 method: "post",
-                url: S.url("/api/logout")
+                url: S.url("/auth/logout")
             }).then(response => (token = null));
         },
         signup: cb => {
@@ -63,10 +95,7 @@ const auth = (() => {
             }).then(cb);
         },
         isLoggedIn: () => {
-            return token !== null;
-        },
-        token: () => {
-            return token;
+            return loggedIn;
         },
         connected: () => connected,
         setEmail: email_ => {
@@ -77,10 +106,7 @@ const auth = (() => {
         },
         request: options => {
             options.url = S.url(options.url);
-            let headers = options.headers || {};
-            headers["Authorization"] = "Bearer " + token;
-            options.headers = headers;
-            return m.request({...options });
+            return m.request({...options, withCredentials: true });
         },
         send: (topic, msg) => {
             eventBus &&

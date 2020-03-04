@@ -2,26 +2,30 @@ package de.eismaenners.starter;
 
 import static de.eismaenners.starter.JsonUtils.json;
 
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 import de.eismaenners.starter.auth.AuthRouter;
+import de.eismaenners.starter.auth.CustomAuthHandler;
+import de.eismaenners.starter.auth.UserService;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.KeyStoreOptions;
-import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.auth.mongo.MongoAuth;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
+import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.handler.StaticHandler;
+import io.vertx.ext.web.handler.sockjs.BridgeOptions;
+import io.vertx.ext.web.handler.sockjs.SockJSHandler;
+import io.vertx.ext.web.sstore.LocalSessionStore;
 
 public class MainVerticle extends AbstractVerticle {
 
-  private JWTAuth authProvider;
   private MongoClient mongoClient;
 
   @Override
@@ -30,21 +34,34 @@ public class MainVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     router.route().handler(BodyHandler.create());
-
-    JWTAuthOptions authConfig = new JWTAuthOptions().setKeyStore(
-        new KeyStoreOptions().setType("jceks").setPath("keystore.jceks").setPassword("U8JmZfBjuH7xGc3jdkpCBLBpwQ"));
-
-    this.authProvider = JWTAuth.create(vertx, authConfig);
+    router.route().handler(BodyHandler.create());
+    router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
 
     JsonObject config = new JsonObject();
     config.put("db_name", "360gradjava");
     this.mongoClient = MongoClient.create(vertx, config);
 
+    JsonObject authProperties = json();
+    MongoAuth authProvider = MongoAuth.create(mongoClient, authProperties) //
+        .setUsernameCredentialField("email") //
+        .setPasswordCredentialField("password") //
+        .setCollectionName("users");
+
+    createDefaultAdmin(authProvider);
+
     router.get("/").handler(context -> {
       context.reroute("/static/index.html");
     });
 
-    router.route("/protected/*").handler(JWTAuthHandler.create(authProvider));
+    router.route("/protected/*").handler(CustomAuthHandler.create(authProvider));
+    BridgeOptions options = new BridgeOptions().addOutboundPermitted(new PermittedOptions().setAddress("news-feed"));
+
+    SockJSHandler create = SockJSHandler.create(vertx);
+    create.bridge(options, sock -> {
+
+    });
+
+    router.route("/protected/eventbus/*").handler(create);
 
     router.get("/protected/secret").handler(ctx -> {
       ctx.response().end(json().put("text", "This is secret").encode());
@@ -62,6 +79,20 @@ public class MainVerticle extends AbstractVerticle {
         System.out.println("HTTP server started on port 8888");
       } else {
         startPromise.fail(http.cause());
+      }
+    });
+  }
+
+  private void createDefaultAdmin(MongoAuth authProvider) {
+    mongoClient.findOne("users", json().put("username", "admin"), json(), findUser -> {
+      if (findUser.succeeded() && findUser.result() == null) {
+        authProvider.insertUser("admin", "admin", Arrays.asList("admin"), Arrays.asList("defaultrole"), saveUser -> {
+          if (saveUser.succeeded()) {
+            System.out.println("User saved.");
+          } else {
+            System.err.println("User not saved.");
+          }
+        });
       }
     });
   }

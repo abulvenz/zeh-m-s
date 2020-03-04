@@ -17,6 +17,7 @@
         "jwt-decode": "^2.2.0",
         "mini.css": "^3.0.1",
         "mithril": "^2.0.4",
-        "tagl-mithril": "^1.2.2"
+        "tagl-mithril": "^1.2.2",
+        "vertx3-eventbus-client": "^3.8.5"
     }
 }

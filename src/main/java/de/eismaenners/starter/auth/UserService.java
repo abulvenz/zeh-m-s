@@ -1,4 +1,4 @@
-package de.eismaenners.starter;
+package de.eismaenners.starter.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

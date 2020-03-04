@@ -6,11 +6,10 @@ import auth from './auth';
 
 let hidden = true;
 
-
 export default vnode => {
     return {
-        view: vnode => [
-            button.login({ "onclick": e => document.getElementById('id01').style.display = 'block', "style": { "width": "auto" } },
+        view: vnode => auth.isLoggedIn() ? button.login({ onclick: e => auth.logout() }, 'Logout') : [
+            button.login({ "onclick": e => document.getElementById('id01').style.display = 'block' },
                 "Login"
             ),
             div.modal.$id01(

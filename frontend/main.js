@@ -13,14 +13,15 @@ m.mount(document.body, {
 
         div.container(
             article.h100vh(
-                m(login),
                 button({ onclick: e => auth.request({ url: '/protected/secret' }).then(r => text = r.text) }, 'Get the secret'),
                 text
             ),
 
         ),
         footer.sticky(
-            img.logo({ src: images.logo }),
+            auth.connected() ? button('Connected') : button('Not Connected'),
+            m(login),
+            // img.logo({ src: images.logo }),
         )
     ]
 })
