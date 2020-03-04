@@ -52,8 +52,9 @@ button.cancelbtn {
 }
 
 img.avatar {
-    width: 40%;
+    /*  width: 40%;*/
     border-radius: 50%;
+    max-height: 120px;
 }
 
 .container {

@@ -67,6 +67,8 @@ public class MainVerticle extends AbstractVerticle {
       ctx.response().end(json().put("text", "This is secret").encode());
     });
 
+    router.route("/protected/static/*").handler(StaticHandler.create("protected-webroot").setCachingEnabled(false));
+
     UserService userService = UserService.create(mongoClient);
 
     router.mountSubRouter("/auth", AuthRouter.create(vertx, userService, authProvider));

@@ -5,19 +5,16 @@ import { img, footer, div, article, button } from './tags';
 
 import images from "*.png"
 import auth from './auth';
+import dashboard from './dashboard';
+import publicinfo from './publicinfo';
 
 let text = 'HJH';
 
 m.mount(document.body, {
     view: vnode => [
+        auth.isLoggedIn() ?
+        m(dashboard) : m(publicinfo),
 
-        div.container(
-            article.h100vh(
-                button({ onclick: e => auth.request({ url: '/protected/secret' }).then(r => text = r.text) }, 'Get the secret'),
-                text
-            ),
-
-        ),
         footer.sticky(
             auth.connected() ? button('Connected') : button('Not Connected'),
             m(login),
