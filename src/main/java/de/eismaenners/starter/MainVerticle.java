@@ -8,6 +8,9 @@ import java.util.function.Consumer;
 import de.eismaenners.starter.auth.AuthRouter;
 import de.eismaenners.starter.auth.CustomAuthHandler;
 import de.eismaenners.starter.auth.UserService;
+import de.eismaenners.starter.auth.AuthRouter.LoginDTO;
+import de.eismaenners.starter.eventbus.Consumes;
+import de.eismaenners.starter.eventbus.EventBusConsumers;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -67,6 +70,8 @@ public class MainVerticle extends AbstractVerticle {
       ctx.response().end(json().put("text", "This is secret").encode());
     });
 
+    EventBusConsumers.setupConsumers(this, vertx.eventBus());
+
     router.route("/protected/static/*").handler(StaticHandler.create("protected-webroot").setCachingEnabled(false));
 
     UserService userService = UserService.create(mongoClient);
@@ -74,6 +79,8 @@ public class MainVerticle extends AbstractVerticle {
     router.mountSubRouter("/auth", AuthRouter.create(vertx, userService, authProvider));
 
     router.route("/static/*").handler(StaticHandler.create("webroot").setCachingEnabled(false));
+
+    vertx.setPeriodic(1000, t -> vertx.eventBus().send("login", json().put("email", "testme@some.thing")));
 
     vertx.createHttpServer().requestHandler(router).listen(8888, http -> {
       if (http.succeeded()) {
