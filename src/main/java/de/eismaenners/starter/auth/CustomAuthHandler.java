@@ -9,7 +9,6 @@ import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.impl.AuthHandlerImpl;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
 
 public class CustomAuthHandler extends AuthHandlerImpl {
 

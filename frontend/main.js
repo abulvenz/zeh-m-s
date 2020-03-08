@@ -8,8 +8,6 @@ import auth from './auth';
 import dashboard from './dashboard';
 import publicinfo from './publicinfo';
 
-let text = 'HJH';
-
 m.mount(document.body, {
     view: vnode => [
         auth.isLoggedIn() ?

@@ -8,8 +8,6 @@ import java.util.function.Consumer;
 import de.eismaenners.starter.auth.AuthRouter;
 import de.eismaenners.starter.auth.CustomAuthHandler;
 import de.eismaenners.starter.auth.UserService;
-import de.eismaenners.starter.auth.AuthRouter.LoginDTO;
-import de.eismaenners.starter.eventbus.Consumes;
 import de.eismaenners.starter.eventbus.EventBusConsumers;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
